@@ -71,7 +71,7 @@ func GetSyllabusLegacy(encodedParamsPlan string) requestresponse.APIResponse {
 	}
 
 	// Query
-	syllabusErr := request.GetJson("http://"+beego.AppConfig.String("SyllabusService")+
+	syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
 		fmt.Sprintf("syllabus?query=espacio_academico_id:%v,proyecto_curricular_id:%v,plan_estudios_id:%v,syllabus_actual:true",
 			espacioAcademicoId, proyectoCurricularId, planEstudioId),
 		&syllabusResponse)

@@ -144,9 +144,9 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 func GetSyllabusTemplate(syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}, format string) {
 	var url string
 	if strings.ToLower(format) == "pdf" {
-		url = "http://" + beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
+		url = beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
 	} else {
-		url = "http://" + beego.AppConfig.String("SyllabusService") + "syllabus/template/spreadsheet"
+		url = beego.AppConfig.String("SyllabusService") + "syllabus/template/spreadsheet"
 	}
 	if err := helpers.SendJson(
 		url,
@@ -165,7 +165,7 @@ func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]a
 	var spaceResponse map[string]interface{}
 
 	spaceErr := request.GetJsonWSO2(
-		"http://"+beego.AppConfig.String("AcademicaEspacioAcademicoService")+
+		beego.AppConfig.String("AcademicaEspacioAcademicoService")+
 			fmt.Sprintf("detalle_espacio_academico/%v/%v/%v", pensumId, carreraCod, asignaturaCod),
 		&spaceResponse)
 
@@ -205,7 +205,7 @@ func GetIdiomas(idiomaIds []interface{}) (string, error) {
 	idiomasStr := ""
 
 	idiomaErr := request.GetJson(
-		"http://"+beego.AppConfig.String("IdiomaService")+"idioma",
+		beego.AppConfig.String("IdiomaService")+"idioma",
 		&idiomaResponse)
 
 	if idiomaErr == nil {

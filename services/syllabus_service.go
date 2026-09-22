@@ -28,7 +28,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 		}
 
 		if syllabusVersion, hasVersion := syllabusRequest["version"]; hasVersion {
-			syllabusErr := request.GetJson("http://"+beego.AppConfig.String("SyllabusService")+
+			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus?query=syllabus_code:%v,version:%v&limit=1&offset=0", syllabusCode, syllabusVersion), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {
@@ -44,7 +44,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 				syllabusData = syllabusList[0].(map[string]interface{})
 			}
 		} else {
-			syllabusErr := request.GetJson("http://"+beego.AppConfig.String("SyllabusService")+
+			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus/%v", syllabusCode), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {

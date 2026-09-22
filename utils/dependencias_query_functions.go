@@ -10,7 +10,7 @@ func GetFacultadDelProyectoC(projectIdOikos string) (map[string]any, error) {
 	var facultadResponse map[string]interface{}
 
 	facultadErr := request.GetJson(
-		"http://"+beego.AppConfig.String("OikosService")+
+		beego.AppConfig.String("OikosService")+
 			fmt.Sprintf("dependencia/get_dependencias_padres_by_id/%v", projectIdOikos),
 		&facultadResponse)
 	if facultadErr == nil && facultadResponse["Type"] == "success" {
@@ -37,7 +37,7 @@ func GetProyectoCurricular(proyectoId int) (map[string]any, error) {
 	var proyectoResponse map[string]interface{}
 
 	proyectoErr := request.GetJsonWSO2(
-		"http://"+beego.AppConfig.String("HomologacionDependenciaService")+
+		beego.AppConfig.String("HomologacionDependenciaService")+
 			fmt.Sprintf("proyecto_curricular_cod_proyecto/%v", proyectoId),
 		&proyectoResponse)
 	if proyectoErr == nil && fmt.Sprintf("%v", proyectoResponse) != "map[homologacion:map[]]" && fmt.Sprintf("%v", proyectoResponse) != "map[]]" {
