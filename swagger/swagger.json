@@ -2,18 +2,18 @@
     "swagger": "2.0",
     "info": {
         "title": "SGA MID - Syllabus",
-        "description": "Microservicio del SGA MID, complementa los endpoints del syllabus, permitiendo consultar información del syllabus y consumir el endpoint generador plantilla del syllabus.",
+        "description": "Microservicio del SGA MID, complementa los endpoints del syllabus, permitiendo consultar información del syllabus y consumir el endpoint generador plantilla del syllabus.\n",
         "version": "1.0.0",
         "contact": {}
     },
     "basePath": "/v1",
     "paths": {
-        "/syllabus/generar-plantilla": {
+        "/syllabus/syllabus_template": {
             "post": {
                 "tags": [
                     "syllabus"
                 ],
-                "description": "post Syllabus template",
+                "description": "post Syllabus template\n\u003cbr\u003e",
                 "operationId": "SyllabusController.PostSyllabusTemplate",
                 "parameters": [
                     {
@@ -41,7 +41,7 @@
                 "tags": [
                     "syllabus"
                 ],
-                "description": "get syllabus",
+                "description": "get syllabus\n\u003cbr\u003e",
                 "operationId": "SyllabusLegacyController.GetSyllabusLegacy",
                 "parameters": [
                     {
