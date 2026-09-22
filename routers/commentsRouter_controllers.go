@@ -7,16 +7,16 @@ import (
 
 func init() {
 
-	beego.GlobalControllerRouter["github.com/udistrital/sga_syllabus_mid/controllers:SyllabusController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_syllabus_mid/controllers:SyllabusController"],
+	beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:SyllabusController"] = append(beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:SyllabusController"],
 		beego.ControllerComments{
 			Method:           "PostSyllabusTemplate",
-			Router:           "/generar-plantilla",
+			Router:           "/syllabus_template",
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["github.com/udistrital/sga_syllabus_mid/controllers:SyllabusLegacyController"] = append(beego.GlobalControllerRouter["github.com/udistrital/sga_syllabus_mid/controllers:SyllabusLegacyController"],
+	beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:SyllabusLegacyController"] = append(beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:SyllabusLegacyController"],
 		beego.ControllerComments{
 			Method:           "GetSyllabusLegacy",
 			Router:           "/:qp_syllabus",

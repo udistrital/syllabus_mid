@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	_ "github.com/udistrital/syllabus_mid/routers"
 	apistatus "github.com/udistrital/utils_oas/apiStatusLib"
 	"github.com/udistrital/utils_oas/customerrorv2"
@@ -16,8 +14,6 @@ import (
 )
 
 func main() {
-	fmt.Println(beego.BConfig.RunMode)
-	fmt.Println(beego.AppConfig.String("httpport"))
 	allowedOrigins := []string{"*.udistrital.edu.co"}
 	if beego.BConfig.RunMode == beego.DEV {
 		allowedOrigins = []string{"*"}
