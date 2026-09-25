@@ -298,6 +298,11 @@ func transformLegacySyllabusData(syllabusData map[string]interface{}) map[string
 	return syllabusTransformed
 }
 
+// TODO: consultar el endpoint que proveerá caracter, modalidad y área de formación.
+func GetCaracterModalidadAreaFormacion(spaceData, syllabusData map[string]interface{}) (caracter, modalidad, areaFormacion string) {
+	return "", "", ""
+}
+
 func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData map[string]interface{}, languages string) map[string]interface{} {
 	var propositos []interface{}
 	var contenidoTematicoDescripcion string
@@ -379,12 +384,22 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	if _, hasPaginasWeb := bibliografia["paginasWeb"]; !hasPaginasWeb {
 		bibliografia["paginasWeb"] = []interface{}{}
 	}
+	if _, hasBases := bibliografia["bases"]; !hasBases {
+		bibliografia["bases"] = []interface{}{}
+	}
 
 	if syllabusData["seguimiento"] != nil {
 		seguimiento = syllabusData["seguimiento"].(map[string]interface{})
 	} else {
 		seguimiento = map[string]interface{}{}
 	}
+
+	elaboro := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "elaboro", ""))
+	reviso := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "reviso", ""))
+	aprobo := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "aprobo", ""))
+	fechaElaboro := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fechaElaboro", ""))
+
+	caracter, modalidad, areaFormacion := GetCaracterModalidadAreaFormacion(spaceData, syllabusData)
 
 	// Procesar resultados de aprendizaje - formato jerárquico nuevo
 	if syllabusData["resultados_aprendizaje"] != nil {
@@ -452,20 +467,10 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 		"htd":                            helpers.DefaultToMapString(spaceData, "htd", ""),
 		"htc":                            helpers.DefaultToMapString(spaceData, "htc", ""),
 		"hta":                            helpers.DefaultToMapString(spaceData, "hta", ""),
-		"es_asignatura":                  helpers.DefaultTo(spaceData["es_asignatura"], false),
-		"es_catedra":                     helpers.DefaultTo(spaceData["es_catedra"], false),
-		"es_obligatorio_basico":          helpers.DefaultTo(spaceData["es_obligatorio_basico"], false),
-		"es_obligatorio_comp":            helpers.DefaultTo(spaceData["es_obligatorio_comp"], false),
-		"es_electivo_int":                helpers.DefaultTo(spaceData["es_electivo_int"], false),
-		"es_electivo_ext":                helpers.DefaultTo(spaceData["es_electivo_ext"], false),
-		"es_electivo":                    helpers.DefaultTo(spaceData["es_electivo"], false),
-		"es_teorico":                     false,
-		"es_practico":                    false,
-		"es_teorico_practico":            false,
-		"es_presencial":                  false,
-		"es_presencial_tic":              false,
-		"es_virtual":                     false,
-		"otra_modalidad":                 false,
+		"naturaleza":                     helpers.DefaultToMapString(spaceData, "naturaleza", ""),
+		"caracter":                       caracter,
+		"modalidad":                      modalidad,
+		"area_formacion":                 areaFormacion,
 		"cual_otra_modalidad":            "",
 		"idiomas":                        helpers.DefaultTo(idiomas, ""),
 		"sugerencias":                    helpers.DefaultToMapString(syllabusData, "sugerencias", ""),
@@ -482,10 +487,15 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 		"practicas_salidas":              helpers.DefaultToMapString(syllabusData, "practicas_academicas", ""),
 		"bibliografia_basica":            bibliografia["basicas"],
 		"bibliografia_complementaria":    bibliografia["complementarias"],
+		"bibliografia_bases":             bibliografia["bases"],
 		"bibliografia_paginas":           bibliografia["paginasWeb"],
 		"fecha_rev_consejo":              fechaRevConsejo,
 		"fecha_aprob_consejo":            fechaAprobConsejo,
 		"num_acta":                       numActa,
+		"elaboro":                        elaboro,
+		"reviso":                         reviso,
+		"aprobo":                         aprobo,
+		"fecha_elaboro":                  fechaElaboro,
 		"version_syllabus":               versionSyllabus,
 	}
 	return syllabusTemplateData
@@ -524,8 +534,6 @@ func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]a
 		if len(spaces) > 0 {
 			space := spaces[0].(map[string]interface{})
 
-			esAsignatura := strings.ToLower(fmt.Sprintf("%v", space["tipo"])) == "asignatura"
-			spaceType := strings.ToLower(fmt.Sprintf("%v", space["cea_abr"]))
 			spaceData := map[string]interface{}{
 				"nombre_espacio_academico": fmt.Sprintf("%v", helpers.DefaultToMapString(space, "asi_nombre", "")),
 				"cod_espacio_academico":    fmt.Sprintf("%v", helpers.DefaultToMapString(space, "asi_cod", "")),
@@ -533,13 +541,7 @@ func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]a
 				"htd":                      fmt.Sprintf("%v", helpers.DefaultToMapString(space, "pen_nro_ht", "")),
 				"htc":                      fmt.Sprintf("%v", helpers.DefaultToMapString(space, "pen_nro_hp", "")),
 				"hta":                      fmt.Sprintf("%v", helpers.DefaultToMapString(space, "pen_nro_aut", "")),
-				"es_asignatura":            esAsignatura,
-				"es_catedra":               !esAsignatura,
-				"es_obligatorio_basico":    spaceType == "ob",
-				"es_obligatorio_comp":      spaceType == "oc",
-				"es_electivo_int":          spaceType == "ei",
-				"es_electivo_ext":          spaceType == "ee",
-				"es_electivo":              spaceType == "e",
+				"naturaleza":               fmt.Sprintf("%v", helpers.DefaultToMapString(space, "cea_nom", "")),
 			}
 			return spaceData, nil
 		} else {
