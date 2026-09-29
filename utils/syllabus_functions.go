@@ -399,7 +399,11 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	elaboro := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "elaboro", ""))
 	reviso := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "reviso", ""))
 	aprobo := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "aprobo", ""))
-	fechaElaboro := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fechaElaboro", ""))
+	// Formato nuevo (snake_case). Fallback a camelCase para documentos previos.
+	fechaElaboro := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fecha_elaboro", ""))
+	if fechaElaboro == "" {
+		fechaElaboro = fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fechaElaboro", ""))
+	}
 
 	caracter, modalidad, areaFormacion := GetCaracterModalidadAreaFormacion(spaceData, syllabusData)
 
@@ -409,9 +413,23 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 		if ok {
 			// Convertir estructura jerárquica a formato plano que esperan las plantillas
 			for _, resultado := range resultados {
-				resMap := resultado.(map[string]interface{})
-				competencia := resMap["competencia"]
+				resMap, isMap := resultado.(map[string]interface{})
+				if !isMap {
+					continue
+				}
 
+				// Nuevo formato: PFA de programa (se conservan campos legacy si existen)
+				if pfaPrograma, hasPFA := resMap["pfa_programa"]; hasPFA {
+					propositos = append(propositos, map[string]interface{}{
+						"pfa_programa":   pfaPrograma,
+						"pfa_asignatura": resMap["pfa_asignatura"],
+						"competencias":   resMap["competencias"],
+					})
+					continue
+				}
+
+				// Formato jerárquico (matriz): competencia + resultados
+				competencia := resMap["competencia"]
 				if subResultados, exists := resMap["resultados"]; exists {
 					subRes := subResultados.([]interface{})
 					for _, subResultado := range subRes {
