@@ -35,21 +35,14 @@ func isLegacyFormat(syllabusData map[string]interface{}) bool {
 	}
 
 	// Verificar si estrategias es un array (legacy) en lugar de un objeto
-	if estrategias, exists := syllabusData["estrategias"]; exists {
-		if reflect.TypeOf(estrategias).Kind() == reflect.Slice {
+	if estrategias, exists := syllabusData["estrategias"]; exists && estrategias != nil {
+		if reflect.ValueOf(estrategias).Kind() == reflect.Slice {
 			return true
 		}
 	}
 
-	// Verificar si evaluacion tiene estructura legacy
-	if evaluacion, exists := syllabusData["evaluacion"]; exists {
-		if evaluacionMap, ok := evaluacion.(map[string]interface{}); ok {
-			// Si tiene "evaluaciones" en lugar de "tipos_evaluacion", es legacy
-			if _, hasEvaluaciones := evaluacionMap["evaluaciones"]; hasEvaluaciones {
-				return true
-			}
-		}
-	}
+	// Nota: el formato nuevo tambien usa "evaluacion.evaluaciones" (con nombre/porcentaje),
+	// por lo que NO se debe detectar legacy por esa llave.
 
 	return false
 }
@@ -230,11 +223,11 @@ func transformLegacySyllabusData(syllabusData map[string]interface{}) map[string
 	}
 
 	// Transformar estrategias si es legacy
-	if estrategias, exists := syllabusTransformed["estrategias"]; exists {
+	if estrategias, exists := syllabusTransformed["estrategias"]; exists && estrategias != nil {
 
 		var slice_str_estragegias []string
 
-		if reflect.TypeOf(estrategias).Kind() == reflect.Slice {
+		if reflect.ValueOf(estrategias).Kind() == reflect.Slice {
 			// vincula la generación de estrategias v2 si hay propositos de aprendizaje legacy
 			_, v2_exist := syllabusTransformed["resultados_aprendizaje"].([]string)
 			estrategiasSlice, estrategias_ok := estrategias.([]interface{})
@@ -348,15 +341,24 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	evaluacion := syllabusData["evaluacion"]
 	if evaluacion != nil {
 
-		evaluacionMap := evaluacion.(map[string]interface{})
-		if tiposEval, exists := evaluacionMap["tipos_evaluacion"]; exists {
-			evaluacionDetalle = tiposEval.([]interface{})
-		} else if tiposEval, exists := evaluacionMap["evaluaciones"]; exists {
-			evaluacionDetalle = tiposEval.([]interface{})
-			evaluacionDescripcion = evaluacionMap["descripcion"].(string)
-		} else {
-			evaluacionDetalle = []interface{}{}
+		evaluacionMap, ok := evaluacion.(map[string]interface{})
+		if ok {
+			if descripcion, hasDesc := evaluacionMap["descripcion"].(string); hasDesc {
+				evaluacionDescripcion = descripcion
+			}
+			if tiposEval, exists := evaluacionMap["tipos_evaluacion"]; exists {
+				if lista, isList := tiposEval.([]interface{}); isList {
+					evaluacionDetalle = lista
+				}
+			} else if tiposEval, exists := evaluacionMap["evaluaciones"]; exists {
+				if lista, isList := tiposEval.([]interface{}); isList {
+					evaluacionDetalle = lista
+				}
+			}
 		}
+	}
+	if evaluacionDetalle == nil {
+		evaluacionDetalle = []interface{}{}
 	}
 
 	if syllabusData["idioma_espacio_id"] != nil {
