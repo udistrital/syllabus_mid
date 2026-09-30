@@ -25,4 +25,13 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
+	beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:VinculacionController"] = append(beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:VinculacionController"],
+		beego.ControllerComments{
+			Method:           "PostVinculacion",
+			Router:           "/",
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
 }

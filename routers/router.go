@@ -24,6 +24,11 @@ func init() {
 				&controllers.SyllabusLegacyController{},
 			),
 		),
+		beego.NSNamespace("/vinculacion",
+			beego.NSInclude(
+				&controllers.VinculacionController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }
