@@ -10,29 +10,31 @@ func GetProgramasAcademicosByIdentificacion(identificacion string) []models.Prog
 		return []models.ProgramaAcademicoCore{}
 	}
 
+	opcionAdmision := "1"
+
 	return []models.ProgramaAcademicoCore{
 		{
 			Codigo:              54,
 			Nombre:              "MAESTRÍA EN ESTUDIOS EDUCATIVOS AFROCOLOMBIANOS Y AFROLATINOAMERICANOS (DIST)",
 			DependenciaCodigo:   24,
 			Estado:              "A",
-			CodigoIcfes:         "",
+			CodigoIcfes:         nil,
 			EmpleadoCodigo:      3531,
 			TipoCarrera:         12,
 			ResolucionSup:       "RESOLUCIÓN 007 DE 26 SEPTIEMBRE 2024",
-			FechaAprobIcfes:     "",
-			FechaUltRenov:       "",
+			FechaAprobIcfes:     nil,
+			FechaUltRenov:       nil,
 			Abreviatura:         "MAE. EST. AFROCOL. AFROLAT. D.",
 			Jornada:             "DIURNA",
-			ProgramaCoordinador: "",
+			ProgramaCoordinador: nil,
 			IdentificacionCoord: "45512868",
 			SeOfrece:            "N",
 			CodigoSnies:         "119092",
-			JustificacionCodigo: "",
+			JustificacionCodigo: nil,
 			IndicadorCiclo:      "N",
 			NotaAprobacion:      35,
 			Email:               "maeafro@udistrital.edu.co",
-			OpcionAdmision:      "1",
+			OpcionAdmision:      &opcionAdmision,
 			Alias:               "PROYECTO CURRICULAR",
 		},
 	}
