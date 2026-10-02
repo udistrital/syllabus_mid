@@ -61,6 +61,34 @@
                     }
                 }
             }
+        },
+        "/vinculacion/": {
+            "post": {
+                "tags": [
+                    "vinculacion"
+                ],
+                "description": "consulta la vinculación del usuario y resuelve su programa académico\n\u003cbr\u003e",
+                "operationId": "VinculacionController.PostVinculacion",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "body datos de identidad",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/{}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "{}"
+                    },
+                    "403": {
+                        "description": ":body {}"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -73,6 +101,10 @@
         {
             "name": "syllabus",
             "description": "SyllabusController operations for Espacios_academicos\n"
+        },
+        {
+            "name": "vinculacion",
+            "description": "VinculacionController operations for Vinculacion\n"
         }
     ]
 }

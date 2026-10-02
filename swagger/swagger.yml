@@ -46,6 +46,26 @@ paths:
           description: '{}'
         "403":
           description: :body {}
+  /vinculacion/:
+    post:
+      tags:
+      - vinculacion
+      description: |-
+        consulta la vinculación del usuario y resuelve su programa académico
+        <br>
+      operationId: VinculacionController.PostVinculacion
+      parameters:
+      - in: body
+        name: body
+        description: body datos de identidad
+        required: true
+        schema:
+          $ref: '#/definitions/{}'
+      responses:
+        "200":
+          description: '{}'
+        "403":
+          description: :body {}
 definitions:
   '{}':
     title: '{}'
@@ -54,3 +74,6 @@ tags:
 - name: syllabus
   description: |
     SyllabusController operations for Espacios_academicos
+- name: vinculacion
+  description: |
+    VinculacionController operations for Vinculacion
