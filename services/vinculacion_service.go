@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/udistrital/syllabus_mid/mocks"
+	// "github.com/udistrital/syllabus_mid/mocks"
+
 	"github.com/udistrital/syllabus_mid/models"
 	"github.com/udistrital/syllabus_mid/utils"
 	"github.com/udistrital/utils_oas/requestresponse"
@@ -36,8 +37,11 @@ func PostVinculacion(data []byte) requestresponse.APIResponse {
 	// El nombre del coordinador es opcional en la petición.
 	nombreCompleto, _ := vinculacionRequest["NombreCompleto"].(string)
 
-	// FASE 2 (mock): academica_core aún no expone su endpoint, se usa la data conocida.
-	programas := mocks.GetProgramasAcademicosByIdentificacion(identificacion)
+	// programas := mocks.GetProgramasAcademicosByIdentificacion(identificacion)
+	programas, err := utils.GetProgramasAcademicosByCoordinador(identificacion)
+	if err != nil {
+		return requestresponse.APIResponseDTO(false, statusFromError(err), nil, err.Error())
+	}
 	if len(programas) == 0 {
 		return requestresponse.APIResponseDTO(false, http.StatusNotFound, nil,
 			fmt.Sprintf("No se encontraron programas vinculados para la identificación %s", identificacion))
@@ -45,7 +49,6 @@ func PostVinculacion(data []byte) requestresponse.APIResponse {
 
 	resultado := make([]models.VinculacionPrograma, 0, len(programas))
 	for _, programa := range programas {
-		// FASE 3: obtener el id_oikos de homologación por cada programa.
 		idOikos, err := utils.GetIdOikosBySnies(programa.CodigoSnies)
 		if err != nil {
 			return requestresponse.APIResponseDTO(false, statusFromError(err), nil,
@@ -58,7 +61,6 @@ func PostVinculacion(data []byte) requestresponse.APIResponse {
 				fmt.Sprintf("El id_oikos recibido de homologación no es numérico: %s (programa: %s)", idOikos, programa.Nombre))
 		}
 
-		// FASE 4: obtener la dependencia padre en OIKOS.
 		padreOikos, err := utils.GetPadreDependenciaOikos(idOikos)
 		if err != nil {
 			return requestresponse.APIResponseDTO(false, statusFromError(err), nil,
