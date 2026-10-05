@@ -41,6 +41,7 @@ func main() {
 	}
 	apistatus.Init()
 	auditoria.InitMiddleware()
+	auditoria.InitInterceptor()
 	beego.ErrorController(&customerrorv2.CustomErrorController{})
 	security.SetSecurityHeaders()
 	beego.Run()

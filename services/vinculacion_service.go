@@ -9,6 +9,8 @@ import (
 
 	// "github.com/udistrital/syllabus_mid/mocks"
 
+	"github.com/astaxie/beego/logs"
+
 	"github.com/udistrital/syllabus_mid/models"
 	"github.com/udistrital/syllabus_mid/utils"
 	"github.com/udistrital/utils_oas/requestresponse"
@@ -51,20 +53,23 @@ func PostVinculacion(data []byte) requestresponse.APIResponse {
 	for _, programa := range programas {
 		idOikos, err := utils.GetIdOikosBySnies(programa.CodigoSnies)
 		if err != nil {
-			return requestresponse.APIResponseDTO(false, statusFromError(err), nil,
-				fmt.Sprintf("%v (programa: %s)", err, programa.Nombre))
+			logs.Warn("se omite el programa %s (SNIES %s) en la vinculación: %v",
+				programa.Nombre, programa.CodigoSnies, err)
+			continue
 		}
 
 		idOikosInt, err := strconv.Atoi(idOikos)
 		if err != nil {
-			return requestresponse.APIResponseDTO(false, http.StatusBadGateway, nil,
-				fmt.Sprintf("El id_oikos recibido de homologación no es numérico: %s (programa: %s)", idOikos, programa.Nombre))
+			logs.Warn("se omite el programa %s (SNIES %s) en la vinculación: id_oikos no numérico %q",
+				programa.Nombre, programa.CodigoSnies, idOikos)
+			continue
 		}
 
 		padreOikos, err := utils.GetPadreDependenciaOikos(idOikos)
 		if err != nil {
-			return requestresponse.APIResponseDTO(false, statusFromError(err), nil,
-				fmt.Sprintf("%v (programa: %s)", err, programa.Nombre))
+			logs.Warn("se omite el programa %s (SNIES %s) en la vinculación: %v",
+				programa.Nombre, programa.CodigoSnies, err)
+			continue
 		}
 
 		resultado = append(resultado, models.VinculacionPrograma{
