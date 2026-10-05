@@ -6,7 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
-	"github.com/udistrital/sga_syllabus_mid/utils"
+	"github.com/udistrital/syllabus_mid/utils"
 	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/requestresponse"
 )
@@ -28,7 +28,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 		}
 
 		if syllabusVersion, hasVersion := syllabusRequest["version"]; hasVersion {
-			syllabusErr := request.GetJson("http://"+beego.AppConfig.String("SyllabusService")+
+			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus?query=syllabus_code:%v,version:%v&limit=1&offset=0", syllabusCode, syllabusVersion), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {
@@ -39,12 +39,14 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 			}
 			syllabusList := syllabusResponse["Data"].([]interface{})
 			if len(syllabusList) < 1 {
-				return requestresponse.APIResponseDTO(false, 404, nil, fmt.Errorf("SyllabusService: syllabus not found by syllabusCode and version"))
+				err := fmt.Errorf("SyllabusService: syllabus not found by syllabusCode and version")
+				logs.Error(err.Error())
+				return requestresponse.APIResponseDTO(false, 404, nil, err.Error())
 			} else {
 				syllabusData = syllabusList[0].(map[string]interface{})
 			}
 		} else {
-			syllabusErr := request.GetJson("http://"+beego.AppConfig.String("SyllabusService")+
+			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus/%v", syllabusCode), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {
@@ -60,7 +62,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 		if syllabusRequest["planId"] == nil || syllabusRequest["proyectoId"] == nil {
 			err := fmt.Errorf("SyllabusTemplateService: Incomplete data to generate the document. Plan de estudios y/o Proyecto Curricular")
 			logs.Error(err.Error())
-			return requestresponse.APIResponseDTO(false, 404, err.Error(), err)
+			return requestresponse.APIResponseDTO(false, 404, nil, err.Error())
 		}
 		// Se asigna proyecto_curricular_id y plan_estudios_id al syllabusData
 		syllabusData["proyecto_curricular_id"] = syllabusRequest["proyectoId"]
@@ -91,8 +93,9 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 
 				utils.GetSyllabusTemplate(syllabusTemplateData, &syllabusTemplateResponse,
 					fmt.Sprintf("%v", templateFormat))
+				document := syllabusTemplateResponse["body"].(map[string]interface{})["Data"]
 				return requestresponse.APIResponseDTO(true,
-					201, syllabusTemplateResponse["Data"].(map[string]interface{}),
+					201, map[string]interface{}{"document": document},
 					"Generated Syllabus Template OK")
 			} else {
 				err := fmt.Errorf(

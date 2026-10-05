@@ -1,0 +1,79 @@
+swagger: "2.0"
+info:
+  title: SGA MID - Syllabus
+  description: |
+    Microservicio del SGA MID, complementa los endpoints del syllabus, permitiendo consultar información del syllabus y consumir el endpoint generador plantilla del syllabus.
+  version: 1.0.0
+basePath: /v1
+paths:
+  /syllabus/{qp_syllabus}:
+    get:
+      tags:
+      - syllabus
+      description: |-
+        get syllabus
+        <br>
+      operationId: SyllabusLegacyController.GetSyllabusLegacy
+      parameters:
+      - in: path
+        name: qp_syllabus
+        description: Parámetros de consulta cifrados (id proyecto curricular, plan
+          de estudio, id espacio académico) syllabus
+        required: true
+        type: string
+      responses:
+        "200":
+          description: '{}'
+        "404":
+          description: not found resource
+  /syllabus/syllabus_template:
+    post:
+      tags:
+      - syllabus
+      description: |-
+        post Syllabus template
+        <br>
+      operationId: SyllabusController.PostSyllabusTemplate
+      parameters:
+      - in: body
+        name: body
+        description: body generar plantilla del syllabus
+        required: true
+        schema:
+          $ref: '#/definitions/{}'
+      responses:
+        "200":
+          description: '{}'
+        "403":
+          description: :body {}
+  /vinculacion/:
+    post:
+      tags:
+      - vinculacion
+      description: |-
+        consulta la vinculación del usuario y resuelve su programa académico
+        <br>
+      operationId: VinculacionController.PostVinculacion
+      parameters:
+      - in: body
+        name: body
+        description: body datos de identidad
+        required: true
+        schema:
+          $ref: '#/definitions/{}'
+      responses:
+        "200":
+          description: '{}'
+        "403":
+          description: :body {}
+definitions:
+  '{}':
+    title: '{}'
+    type: object
+tags:
+- name: syllabus
+  description: |
+    SyllabusController operations for Espacios_academicos
+- name: vinculacion
+  description: |
+    VinculacionController operations for Vinculacion

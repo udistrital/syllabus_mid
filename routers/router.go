@@ -5,7 +5,7 @@ package routers
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/udistrital/sga_syllabus_mid/controllers"
+	"github.com/udistrital/syllabus_mid/controllers"
 	"github.com/udistrital/utils_oas/errorhandler"
 )
 
@@ -22,6 +22,11 @@ func init() {
 		beego.NSNamespace("/syllabus",
 			beego.NSInclude(
 				&controllers.SyllabusLegacyController{},
+			),
+		),
+		beego.NSNamespace("/vinculacion",
+			beego.NSInclude(
+				&controllers.VinculacionController{},
 			),
 		),
 	)
