@@ -1,5 +1,5 @@
 # Build stage for installing libmcrypt
-FROM debian:12 as builder
+FROM debian:13 as builder
 
 RUN apt-get update && \
     apt-get install -y libmcrypt4 libmcrypt-dev && \
