@@ -11,6 +11,30 @@ import (
 	"github.com/udistrital/utils_oas/request"
 )
 
+// asMap devuelve el valor como mapa, o un mapa vacío si no lo es.
+func asMap(v any) map[string]any {
+	if m, ok := v.(map[string]any); ok && m != nil {
+		return m
+	}
+	return map[string]any{}
+}
+
+// asSlice devuelve el valor como slice, o un slice vacío si no lo es.
+func asSlice(v any) []any {
+	if s, ok := v.([]any); ok && s != nil {
+		return s
+	}
+	return []any{}
+}
+
+// asString convierte un valor a string de forma segura.
+func asString(v any) string {
+	if v == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", v)
+}
+
 // isLegacyFormat detecta si el syllabus tiene formato legacy
 func isLegacyFormat(syllabusData map[string]interface{}) bool {
 	// Verificar si objetivos_especificos es un array de strings (legacy)
@@ -167,9 +191,9 @@ func isInvalidText(llave string) bool {
 func leerPropositosAprendizajeLegacy(resultadosSlice []interface{}, slice_str_resultados []string) []string {
 	for _, result_obj := range resultadosSlice {
 		if res, ok := result_obj.(map[string]interface{}); ok {
-			pfa_p := helpers.DefaultToMapString(res, "pfa_programa", "").(string)
-			pfa_a := helpers.DefaultToMapString(res, "pfa_asignatura", "").(string)
-			comp := helpers.DefaultToMapString(res, "competencias", "").(string)
+			pfa_p := asString(helpers.DefaultToMapString(res, "pfa_programa", ""))
+			pfa_a := asString(helpers.DefaultToMapString(res, "pfa_asignatura", ""))
+			comp := asString(helpers.DefaultToMapString(res, "competencias", ""))
 			slice_str_resultados = append(slice_str_resultados, pfa_p, pfa_a, comp)
 		}
 	}
@@ -234,7 +258,7 @@ func transformLegacySyllabusData(syllabusData map[string]interface{}) map[string
 			if estrategias_ok && v2_exist {
 				for _, item := range estrategiasSlice {
 					if estr, ok := item.(map[string]interface{}); ok {
-						slice_str_estragegias = append(slice_str_estragegias, estr["descripcion"].(string))
+						slice_str_estragegias = append(slice_str_estragegias, asString(estr["descripcion"]))
 					}
 				}
 				logs.Info("Enviando estrategias legacy")
@@ -266,7 +290,7 @@ func transformLegacySyllabusData(syllabusData map[string]interface{}) map[string
 	// Normalizar subtemas en contenidos temáticos (legacy)
 	if contenido, ok := syllabusTransformed["contenido"].(map[string]interface{}); ok {
 		if temas, ok := contenido["temas"].([]interface{}); ok {
-			for i, tema := range temas {
+			for _, tema := range temas {
 				if temaMap, ok := tema.(map[string]interface{}); ok {
 					if subtemas, ok := temaMap["subtemas"].([]interface{}); ok {
 						var subtemasStr []interface{}
@@ -280,7 +304,7 @@ func transformLegacySyllabusData(syllabusData map[string]interface{}) map[string
 								subtemasStr = append(subtemasStr, subtemaStr)
 							}
 						}
-						syllabusTransformed["contenido"].(map[string]interface{})["temas"].([]interface{})[i].(map[string]interface{})["subtemas"] = subtemasStr
+						temaMap["subtemas"] = subtemasStr
 					}
 				}
 			}
@@ -315,26 +339,24 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	}
 
 	if syllabusData["objetivos_especificos"] != nil {
-		objetivos := syllabusData["objetivos_especificos"].([]any)
-		for _, objetivo := range objetivos {
-			objetivoStr := fmt.Sprintf("%v", objetivo.(map[string]interface{})["objetivo"])
+		for _, objetivo := range asSlice(syllabusData["objetivos_especificos"]) {
+			objetivoStr := fmt.Sprintf("%v", asMap(objetivo)["objetivo"])
 			objetivosEspecificos = append(objetivosEspecificos, objetivoStr)
 		}
 	} else {
 		objetivosEspecificos = []string{}
 	}
 
-	contenido := syllabusData["contenido"]
-	if contenido != nil {
+	if contenidoRaw := syllabusData["contenido"]; contenidoRaw != nil {
+		contenido := asMap(contenidoRaw)
 		contenidoTematicoDescripcion = fmt.Sprintf(
 			"%v",
-			helpers.DefaultToMapString(contenido.(map[string]interface{}),
-				"descripcion", ""))
+			helpers.DefaultToMapString(contenido, "descripcion", ""))
 
-		if contenido.(map[string]interface{})["temas"] == nil {
+		if contenido["temas"] == nil {
 			contenidoTematicoDetalle = []interface{}{}
 		} else {
-			contenidoTematicoDetalle = contenido.(map[string]interface{})["temas"].([]interface{})
+			contenidoTematicoDetalle = asSlice(contenido["temas"])
 		}
 	}
 
@@ -366,7 +388,7 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	}
 
 	if syllabusData["bibliografia"] != nil {
-		bibliografia = syllabusData["bibliografia"].(map[string]interface{})
+		bibliografia = asMap(syllabusData["bibliografia"])
 	} else {
 		// Crear estructura dummy para bibliografía si no existe
 		bibliografia = map[string]interface{}{
@@ -391,7 +413,7 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	}
 
 	if syllabusData["seguimiento"] != nil {
-		seguimiento = syllabusData["seguimiento"].(map[string]interface{})
+		seguimiento = asMap(syllabusData["seguimiento"])
 	} else {
 		seguimiento = map[string]interface{}{}
 	}
@@ -431,9 +453,8 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 				// Formato jerárquico (matriz): competencia + resultados
 				competencia := resMap["competencia"]
 				if subResultados, exists := resMap["resultados"]; exists {
-					subRes := subResultados.([]interface{})
-					for _, subResultado := range subRes {
-						subMap := subResultado.(map[string]interface{})
+					for _, subResultado := range asSlice(subResultados) {
+						subMap := asMap(subResultado)
 						// Crear entrada en formato plano para cada resultado específico
 						proposito := map[string]interface{}{
 							"competencia":         competencia,
@@ -464,17 +485,16 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	}
 
 	fechaRevConsejo := strings.Split(
-		helpers.DefaultToMapString(seguimiento, "fechaRevisionConsejo", "").(string),
+		asString(helpers.DefaultToMapString(seguimiento, "fechaRevisionConsejo", "")),
 		"T")[0]
 	fechaAprobConsejo := strings.Split(
-		helpers.DefaultToMapString(seguimiento, "fechaAprobacionConsejo", "").(string),
+		asString(helpers.DefaultToMapString(seguimiento, "fechaAprobacionConsejo", "")),
 		"T")[0]
-	numActa := helpers.DefaultToMapString(seguimiento, "numeroActa", "").(string)
+	numActa := asString(helpers.DefaultToMapString(seguimiento, "numeroActa", ""))
 
-	if versionSyll := helpers.DefaultToMapString(syllabusData, "version", 0); versionSyll.(float64) > 0 {
+	versionSyllabus = ""
+	if versionSyll, ok := helpers.DefaultToMapString(syllabusData, "version", 0).(float64); ok && versionSyll > 0 {
 		versionSyllabus = fmt.Sprintf("%v", versionSyll)
-	} else {
-		versionSyllabus = ""
 	}
 
 	syllabusTemplateData := map[string]interface{}{
@@ -549,10 +569,10 @@ func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]a
 			fmt.Sprintf("detalle_espacio_academico/%v/%v/%v", pensumId, carreraCod, asignaturaCod),
 		&spaceResponse)
 
-	if spaceErr == nil && fmt.Sprintf("%v", spaceResponse) != "map[espacios_academicos:map[]]" && fmt.Sprintf("%v", spaceResponse) != "map[]]" {
-		spaces := spaceResponse["espacios_academicos"].(map[string]interface{})["espacio_academico"].([]interface{})
+	if spaceErr == nil {
+		spaces := asSlice(asMap(spaceResponse["espacios_academicos"])["espacio_academico"])
 		if len(spaces) > 0 {
-			space := spaces[0].(map[string]interface{})
+			space := asMap(spaces[0])
 
 			spaceData := map[string]interface{}{
 				"nombre_espacio_academico": fmt.Sprintf("%v", helpers.DefaultToMapString(space, "asi_nombre", "")),
@@ -564,12 +584,9 @@ func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]a
 				"naturaleza":               fmt.Sprintf("%v", helpers.DefaultToMapString(space, "cea_nom", "")),
 			}
 			return spaceData, nil
-		} else {
-			return nil, fmt.Errorf("Espacio académico no encontrado")
 		}
-	} else {
-		return nil, fmt.Errorf("Espacio académico no encontrado")
 	}
+	return nil, fmt.Errorf("Espacio académico no encontrado")
 }
 
 func GetIdiomas(idiomaIds []interface{}) (string, error) {
@@ -584,10 +601,11 @@ func GetIdiomas(idiomaIds []interface{}) (string, error) {
 		for i, id := range idiomaIds {
 			for _, idioma := range idiomaResponse {
 				if idioma["Id"] == id {
+					nombre := asString(idioma["Nombre"])
 					if i == len(idiomaIds)-1 {
-						idiomasStr += idioma["Nombre"].(string)
+						idiomasStr += nombre
 					} else {
-						idiomasStr += idioma["Nombre"].(string) + ", "
+						idiomasStr += nombre + ", "
 					}
 					break
 				}
