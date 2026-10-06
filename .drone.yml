@@ -57,6 +57,8 @@ steps:
     - apt-get update
     - apt-get install -y libmcrypt4 libmcrypt-dev
     - GOOS=linux GOARCH=amd64 go build -o main
+    - mkdir -p lib
+    - cp -L /usr/lib/x86_64-linux-gnu/libmcrypt.so* lib/
   when:
     branch:
       - feature/*
