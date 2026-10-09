@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -541,18 +542,14 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	return syllabusTemplateData
 }
 
-func GetSyllabusTemplate(syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}, format string) {
+func GetSyllabusTemplate(ctx context.Context, syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}, format string) {
 	var url string
 	if strings.ToLower(format) == "pdf" {
 		url = beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
 	} else {
 		url = beego.AppConfig.String("SyllabusService") + "syllabus/template/spreadsheet"
 	}
-	if err := helpers.SendJson(
-		url,
-		"POST",
-		&syllabusTemplateResponse,
-		syllabusTemplateData); err != nil {
+	if _, err := request.PostWithContext(ctx, url, syllabusTemplateData, syllabusTemplateResponse); err != nil {
 		panic(map[string]interface{}{
 			"funcion": "GenerarTemplate",
 			"err":     "Error al generar el documento del syllabus ",
@@ -561,10 +558,10 @@ func GetSyllabusTemplate(syllabusTemplateData map[string]interface{}, syllabusTe
 	}
 }
 
-func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]any, error) {
+func GetAcademicSpaceData(ctx context.Context, pensumId, carreraCod, asignaturaCod int) (map[string]any, error) {
 	var spaceResponse map[string]interface{}
 
-	spaceErr := request.GetJsonWSO2(
+	_, spaceErr := request.GetWithContext(ctx,
 		beego.AppConfig.String("AcademicaEspacioAcademicoService")+
 			fmt.Sprintf("detalle_espacio_academico/%v/%v/%v", pensumId, carreraCod, asignaturaCod),
 		&spaceResponse)
@@ -589,11 +586,11 @@ func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]a
 	return nil, fmt.Errorf("Espacio académico no encontrado")
 }
 
-func GetIdiomas(idiomaIds []interface{}) (string, error) {
+func GetIdiomas(ctx context.Context, idiomaIds []interface{}) (string, error) {
 	var idiomaResponse []map[string]interface{}
 	idiomasStr := ""
 
-	idiomaErr := request.GetJson(
+	_, idiomaErr := request.GetWithContext(ctx,
 		beego.AppConfig.String("IdiomaService")+"idioma",
 		&idiomaResponse)
 

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,7 +25,7 @@ func statusFromError(err error) int {
 	return http.StatusInternalServerError
 }
 
-func PostVinculacion(data []byte) requestresponse.APIResponse {
+func PostVinculacion(ctx context.Context, data []byte) requestresponse.APIResponse {
 	var vinculacionRequest map[string]interface{}
 
 	if err := json.Unmarshal(data, &vinculacionRequest); err != nil {
@@ -40,7 +41,7 @@ func PostVinculacion(data []byte) requestresponse.APIResponse {
 	nombreCompleto, _ := vinculacionRequest["NombreCompleto"].(string)
 
 	// programas := mocks.GetProgramasAcademicosByIdentificacion(identificacion)
-	programas, err := utils.GetProgramasAcademicosByCoordinador(identificacion)
+	programas, err := utils.GetProgramasAcademicosByCoordinador(ctx, identificacion)
 	if err != nil {
 		return requestresponse.APIResponseDTO(false, statusFromError(err), nil, err.Error())
 	}
@@ -51,7 +52,7 @@ func PostVinculacion(data []byte) requestresponse.APIResponse {
 
 	resultado := make([]models.VinculacionPrograma, 0, len(programas))
 	for _, programa := range programas {
-		idOikos, err := utils.GetIdOikosBySnies(programa.CodigoSnies)
+		idOikos, err := utils.GetIdOikosBySnies(ctx, programa.CodigoSnies)
 		if err != nil {
 			logs.Warn("se omite el programa %s (SNIES %s) en la vinculación: %v",
 				programa.Nombre, programa.CodigoSnies, err)
@@ -65,7 +66,7 @@ func PostVinculacion(data []byte) requestresponse.APIResponse {
 			continue
 		}
 
-		padreOikos, err := utils.GetPadreDependenciaOikos(idOikos)
+		padreOikos, err := utils.GetPadreDependenciaOikos(ctx, idOikos)
 		if err != nil {
 			logs.Warn("se omite el programa %s (SNIES %s) en la vinculación: %v",
 				programa.Nombre, programa.CodigoSnies, err)
