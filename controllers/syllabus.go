@@ -26,7 +26,7 @@ func (c *SyllabusController) URLMapping() {
 func (c *SyllabusController) PostSyllabusTemplate() {
 	defer errorhandler.HandlePanic(&c.Controller)
 	bodyData := c.Ctx.Input.RequestBody
-	respuesta := services.PostSyllabusTemplate(bodyData)
+	respuesta := services.PostSyllabusTemplate(c.Ctx.Request.Context(), bodyData)
 	c.Data["json"] = respuesta
 	c.Ctx.Output.SetStatus(respuesta.Status)
 	c.ServeJSON()
