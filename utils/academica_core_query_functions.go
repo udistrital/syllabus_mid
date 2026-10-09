@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -11,10 +12,10 @@ import (
 
 // GetProgramasAcademicosByCoordinador consulta academica_core para obtener los
 // programas académicos vinculados a la identificación del coordinador.
-func GetProgramasAcademicosByCoordinador(identificacion string) ([]models.ProgramaAcademicoCore, error) {
+func GetProgramasAcademicosByCoordinador(ctx context.Context, identificacion string) ([]models.ProgramaAcademicoCore, error) {
 	var programas []models.ProgramaAcademicoCore
 
-	err := request.GetJson(
+	_, err := request.GetWithContext(ctx,
 		beego.AppConfig.String("AcademicaCore")+
 			fmt.Sprintf("programas-academicos/coordinador/%s", identificacion), &programas)
 	if err != nil {

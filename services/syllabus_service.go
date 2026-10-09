@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/udistrital/utils_oas/requestresponse"
 )
 
-func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
+func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIResponse {
 	var syllabusRequest map[string]interface{}
 	var syllabusResponse map[string]interface{}
 	var syllabusTemplateResponse map[string]interface{}
@@ -28,7 +29,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 		}
 
 		if syllabusVersion, hasVersion := syllabusRequest["version"]; hasVersion {
-			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
+			_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus?query=syllabus_code:%v,version:%v&limit=1&offset=0", syllabusCode, syllabusVersion), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {
@@ -46,7 +47,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 				syllabusData = syllabusList[0].(map[string]interface{})
 			}
 		} else {
-			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
+			_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus/%v", syllabusCode), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {
@@ -68,19 +69,19 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 		syllabusData["proyecto_curricular_id"] = syllabusRequest["proyectoId"]
 		syllabusData["plan_estudios_id"] = syllabusRequest["planId"]
 
-		spaceData, spaceErr := utils.GetAcademicSpaceData(
+		spaceData, spaceErr := utils.GetAcademicSpaceData(ctx,
 			int(syllabusData["plan_estudios_id"].(float64)),
 			int(syllabusData["proyecto_curricular_id"].(float64)),
 			int(syllabusData["espacio_academico_id"].(float64)))
 
-		projectData, projectErr := utils.GetProyectoCurricular(int(syllabusData["proyecto_curricular_id"].(float64)))
+		projectData, projectErr := utils.GetProyectoCurricular(ctx, int(syllabusData["proyecto_curricular_id"].(float64)))
 
 		if spaceErr == nil && projectErr == nil {
-			facultyData, facultyErr := utils.GetFacultadDelProyectoC(projectData["id_oikos"].(string))
+			facultyData, facultyErr := utils.GetFacultadDelProyectoC(ctx, projectData["id_oikos"].(string))
 			idiomas := ""
 
 			if syllabusData["idioma_espacio_id"] != nil {
-				idiomasStr, idiomaErr := utils.GetIdiomas(syllabusData["idioma_espacio_id"].([]interface{}))
+				idiomasStr, idiomaErr := utils.GetIdiomas(ctx, syllabusData["idioma_espacio_id"].([]interface{}))
 				if idiomaErr == nil {
 					idiomas = idiomasStr
 				}
@@ -91,7 +92,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 					spaceData, syllabusData,
 					facultyData, projectData, idiomas)
 
-				utils.GetSyllabusTemplate(syllabusTemplateData, &syllabusTemplateResponse,
+				utils.GetSyllabusTemplate(ctx, syllabusTemplateData, &syllabusTemplateResponse,
 					fmt.Sprintf("%v", templateFormat))
 				document := syllabusTemplateResponse["body"].(map[string]interface{})["Data"]
 				return requestresponse.APIResponseDTO(true,
