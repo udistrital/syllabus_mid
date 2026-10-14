@@ -8,6 +8,109 @@
     },
     "basePath": "/v1",
     "paths": {
+        "/flujo/asignar": {
+            "post": {
+                "tags": [
+                    "flujo"
+                ],
+                "description": "Asigna la creación/edición de un syllabus a un docente\n\u003cbr\u003e",
+                "operationId": "FlujoController.Asignar",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "datos de asignación",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/{}"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "{}"
+                    },
+                    "400": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/flujo/docente": {
+            "get": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/mis-asignaciones": {
+            "get": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/pendientes": {
+            "get": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/{code}/aprobar": {
+            "post": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/{code}/borrador": {
+            "get": {
+                "tags": [
+                    "flujo"
+                ]
+            },
+            "put": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/{code}/cancelar": {
+            "post": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/{code}/estado": {
+            "get": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/{code}/proponer": {
+            "post": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/{code}/reabrir": {
+            "post": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
+        "/flujo/{code}/rechazar": {
+            "post": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
         "/syllabus/syllabus_template": {
             "post": {
                 "tags": [
@@ -105,6 +208,10 @@
         {
             "name": "vinculacion",
             "description": "VinculacionController operations for Vinculacion\n"
+        },
+        {
+            "name": "flujo",
+            "description": "FlujoController expone el flujo de aprobación de syllabus.\n"
         }
     ]
 }
