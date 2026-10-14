@@ -19,6 +19,7 @@ IDIOMA_SERVICE: [Servicio API IDIOMA]
 OIKOS_SERVICE: [Servicio API OIKOS]
 SYLLABUS_SERVICE: [Servicio API CRUD SYLLABUS]
 ACADEMICA_CORE_SERVICE: [Servicio API CRD ACADEMICA]
+TERCEROS_SERVICE: [Servicio API CRUD TERCEROS]
 ```
 **NOTA:** Las variables se pueden ver en el fichero conf/app.conf.
 
@@ -75,8 +76,15 @@ docker ps
 
 Pruebas unitarias
 ```shell
-# En Proceso
+go test ./utils/... ./services/...
 ```
+
+### Flujo de aprobación
+
+Endpoints del flujo (namespace `/v1/flujo`). La identidad se resuelve desde el
+token (`oauth2/userinfo` → documento) y, en local sin token, desde el campo
+`documento` del cuerpo. La autorización es por datos: coordinador por
+vinculación del programa y docente por la asignación del borrador.
 
 ## Estado CI
 
