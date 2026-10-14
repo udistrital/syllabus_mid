@@ -29,6 +29,11 @@ func init() {
 				&controllers.VinculacionController{},
 			),
 		),
+		beego.NSNamespace("/flujo",
+			beego.NSInclude(
+				&controllers.FlujoController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }
