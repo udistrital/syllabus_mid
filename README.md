@@ -86,6 +86,15 @@ token (`oauth2/userinfo` → documento) y, en local sin token, desde el campo
 `documento` del cuerpo. La autorización es por datos: coordinador por
 vinculación del programa y docente por la asignación del borrador.
 
+### Manejo de fechas
+
+* Formato canónico de escritura: ISO 8601 en UTC (`time.Now().UTC()`,
+  `toISOString()` del front).
+* El PDF recibe las fechas de `seguimiento` solo con la fecha (sin horas),
+  convertidas a Bogotá en `GetSyllabusTemplateData` (`fecha_elaboro`,
+  `fecha_rev_consejo`, `fecha_aprob_consejo`).
+* La conversión para mostrar en pantalla es del cliente (zona del navegador).
+
 ## Estado CI
 
 | Develop | Relese 0.0.1 | Master |
