@@ -416,6 +416,77 @@ func ReabrirSyllabus(ctx context.Context, code string, body []byte) requestrespo
 	return requestresponse.APIResponseDTO(true, http.StatusOK, updated, "Propuesta reabierta")
 }
 
+// ReasignarSyllabus cambia el docente de una propuesta abierta conservando su
+// contenido (mismo documento/versión), con plazo nuevo. Disponible para
+// asignado/rechazado/expirado; una propuesta en revisión debe rechazarse antes.
+func ReasignarSyllabus(ctx context.Context, code string, body []byte) requestresponse.APIResponse {
+	var req models.ReasignarRequest
+	_ = json.Unmarshal(body, &req)
+	if req.DocumentoDocente == "" {
+		return respErr(http.StatusBadRequest, "El documento del nuevo docente es obligatorio")
+	}
+	if req.FechaLimite == "" {
+		return respErr(http.StatusBadRequest, "La nueva fecha límite es obligatoria")
+	}
+
+	ident, err := utils.ResolverIdentidad(ctx, req.Documento)
+	if err != nil {
+		return apiError(err)
+	}
+	draft, err := utils.GetBorradorAbierto(ctx, code)
+	if err != nil {
+		return apiError(err)
+	}
+	if draft == nil {
+		return respErr(http.StatusNotFound, "No hay una propuesta en curso para este syllabus")
+	}
+	estado := utils.SyllabusString(draft, "estado")
+	if estado != models.EstadoAsignado && estado != models.EstadoRechazado && estado != models.EstadoExpirado {
+		return respErr(http.StatusConflict,
+			"No se puede reasignar en estado "+estado+"; rechace la propuesta primero")
+	}
+	ok, err := utils.EsCoordinadorDePrograma(ctx, ident.Documento,
+		utils.SyllabusIntSlice(draft, "proyecto_curricular_ids"))
+	if err != nil {
+		return apiError(err)
+	}
+	if !ok {
+		return respErr(http.StatusForbidden, "Solo el coordinador del programa puede reasignar la propuesta")
+	}
+
+	flujo := utils.FlujoMap(draft)
+	if utils.FlujoString(flujo, "asignado_a_documento") == req.DocumentoDocente {
+		return respErr(http.StatusBadRequest, "El docente indicado ya tiene asignada esta propuesta")
+	}
+
+	nuevoDocente, err := utils.GetTerceroByDocumento(ctx, req.DocumentoDocente)
+	if err != nil {
+		return apiError(err)
+	}
+	if nuevoDocente == nil {
+		return respErr(http.StatusNotFound,
+			fmt.Sprintf("No se encontró un tercero activo con documento %s", req.DocumentoDocente))
+	}
+
+	observacion := req.Observacion
+	if observacion == "" {
+		observacion = "Reasignación de docente"
+	}
+	updated, err := utils.PutEstado(ctx, utils.SyllabusString(draft, "_id"), map[string]any{
+		"estado":               models.EstadoAsignado,
+		"asignado_a":           nuevoDocente.Id,
+		"asignado_a_documento": req.DocumentoDocente,
+		"fecha_limite":         req.FechaLimite,
+		"tercero_id":           ident.TerceroId,
+		"tercero_documento":    ident.Documento,
+		"observacion":          observacion,
+	})
+	if err != nil {
+		return apiError(err)
+	}
+	return requestresponse.APIResponseDTO(true, http.StatusOK, updated, "Propuesta reasignada")
+}
+
 // CancelarSyllabus descarta una propuesta en curso.
 func CancelarSyllabus(ctx context.Context, code string, body []byte) requestresponse.APIResponse {
 	var req models.TransicionRequest
@@ -510,7 +581,11 @@ func GetEstado(ctx context.Context, code string, documento string) requestrespon
 	}, "Estado del flujo obtenido")
 }
 
-// PendientesSyllabus lista las propuestas en revisión de los programas del coordinador.
+// PendientesSyllabus lista las propuestas abiertas (en revisión y en curso:
+// asignado/rechazado/expirado) de los programas del coordinador. La
+// autorización se recalcula por programa vigente: al cambiar el coordinador,
+// su reemplazo hereda la gestión de las asignaciones (incluidas las del
+// coordinador anterior), y quien deja de serlo pierde el acceso.
 func PendientesSyllabus(ctx context.Context, documento string) requestresponse.APIResponse {
 	ident, err := utils.ResolverIdentidad(ctx, documento)
 	if err != nil {
@@ -520,7 +595,7 @@ func PendientesSyllabus(ctx context.Context, documento string) requestresponse.A
 	if err != nil {
 		return apiError(err)
 	}
-	drafts, err := utils.GetBorradoresPorEstado(ctx, models.EstadoEnRevision)
+	drafts, err := utils.GetBorradoresAbiertos(ctx)
 	if err != nil {
 		return apiError(err)
 	}
@@ -533,7 +608,7 @@ func PendientesSyllabus(ctx context.Context, documento string) requestresponse.A
 			}
 		}
 	}
-	return requestresponse.APIResponseDTO(true, http.StatusOK, resultado, "Propuestas pendientes")
+	return requestresponse.APIResponseDTO(true, http.StatusOK, resultado, "Propuestas abiertas del coordinador")
 }
 
 // MisAsignacionesSyllabus lista las propuestas asignadas a un docente.

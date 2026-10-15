@@ -104,6 +104,13 @@
                 ]
             }
         },
+        "/flujo/{code}/reasignar": {
+            "post": {
+                "tags": [
+                    "flujo"
+                ]
+            }
+        },
         "/flujo/{code}/rechazar": {
             "post": {
                 "tags": [

@@ -78,6 +78,13 @@ func GetBorradoresPorEstado(ctx context.Context, estado string) ([]map[string]an
 	return doGetSyllabusList(ctx, fmt.Sprintf("estado:%s", estado), 200)
 }
 
+// GetBorradoresAbiertos devuelve todas las propuestas no publicadas (en
+// cualquier estado borrador: asignado, en_revision, rechazado, expirado).
+func GetBorradoresAbiertos(ctx context.Context) ([]map[string]any, error) {
+	query := fmt.Sprintf("estado:%s", strings.Join(models.EstadosBorrador, "|"))
+	return doGetSyllabusList(ctx, query, 200)
+}
+
 // GetBorradoresPorDocente devuelve las asignaciones de un docente por documento
 // o por tercero_id.
 func GetBorradoresPorDocente(ctx context.Context, documento string, terceroId int) ([]map[string]any, error) {

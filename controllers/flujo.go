@@ -92,6 +92,17 @@ func (c *FlujoController) Reabrir() {
 	c.ServeJSON()
 }
 
+// Reasignar ...
+// @router /:code/reasignar [post]
+func (c *FlujoController) Reasignar() {
+	defer errorhandler.HandlePanic(&c.Controller)
+	respuesta := services.ReasignarSyllabus(c.Ctx.Request.Context(),
+		c.Ctx.Input.Param(":code"), c.Ctx.Input.RequestBody)
+	c.Data["json"] = respuesta
+	c.Ctx.Output.SetStatus(respuesta.Status)
+	c.ServeJSON()
+}
+
 // Cancelar ...
 // @router /:code/cancelar [post]
 func (c *FlujoController) Cancelar() {

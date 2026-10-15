@@ -66,3 +66,11 @@ type TransicionRequest struct {
 	NumeroActa    string `json:"numeroActa"`
 	Archivo       string `json:"archivo"`
 }
+
+// ReasignarRequest es el cuerpo para cambiar el docente de una propuesta abierta.
+type ReasignarRequest struct {
+	Documento        string `json:"documento"`
+	DocumentoDocente string `json:"documento_docente"`
+	FechaLimite      string `json:"fecha_limite"`
+	Observacion      string `json:"observacion"`
+}
