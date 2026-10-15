@@ -542,13 +542,8 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	return syllabusTemplateData
 }
 
-func GetSyllabusTemplate(ctx context.Context, syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}, format string) {
-	var url string
-	if strings.ToLower(format) == "pdf" {
-		url = beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
-	} else {
-		url = beego.AppConfig.String("SyllabusService") + "syllabus/template/spreadsheet"
-	}
+func GetSyllabusTemplate(ctx context.Context, syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}) {
+	url := beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
 	if _, err := request.PostWithContext(ctx, url, syllabusTemplateData, syllabusTemplateResponse); err != nil {
 		panic(map[string]interface{}{
 			"funcion": "GenerarTemplate",

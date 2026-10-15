@@ -7,10 +7,21 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	"github.com/udistrital/syllabus_mid/models"
 	"github.com/udistrital/syllabus_mid/utils"
 	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/requestresponse"
 )
+
+// esEstadoBorrador indica si el estado corresponde a una propuesta no publicada.
+func esEstadoBorrador(estado string) bool {
+	for _, e := range models.EstadosBorrador {
+		if e == estado {
+			return true
+		}
+	}
+	return false
+}
 
 func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIResponse {
 	var syllabusRequest map[string]interface{}
@@ -21,14 +32,32 @@ func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIR
 
 	if err := json.Unmarshal(data, &syllabusRequest); err == nil {
 		syllabusCode := syllabusRequest["syllabusCode"]
-		templateFormat, hasFormat := syllabusRequest["format"]
-		if hasFormat {
-			templateFormat = templateFormat.(string)
-		} else {
-			templateFormat = "pdf"
+
+		estadoStr := ""
+		if estado, hasEstado := syllabusRequest["estado"]; hasEstado && estado != nil {
+			estadoStr = fmt.Sprintf("%v", estado)
 		}
 
-		if syllabusVersion, hasVersion := syllabusRequest["version"]; hasVersion {
+		if esEstadoBorrador(estadoStr) {
+			// Borrador/propuesta: se trae la versión no publicada por su estado
+			// (el estado explícito evita el filtro por defecto que oculta borradores).
+			_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
+				fmt.Sprintf("syllabus?query=syllabus_code:%v,estado:%v&limit=1&offset=0", syllabusCode, estadoStr), &syllabusResponse)
+			if syllabusErr != nil || syllabusResponse["Success"] == false {
+				if syllabusErr == nil {
+					syllabusErr = fmt.Errorf("SyllabusService: %v", syllabusResponse["Message"])
+				}
+				logs.Error(syllabusErr.Error())
+				return requestresponse.APIResponseDTO(false, 404, nil, syllabusErr.Error())
+			}
+			syllabusList, ok := syllabusResponse["Data"].([]interface{})
+			if !ok || len(syllabusList) < 1 {
+				err := fmt.Errorf("SyllabusService: propuesta no encontrada para el syllabusCode %v y estado %v", syllabusCode, estadoStr)
+				logs.Error(err.Error())
+				return requestresponse.APIResponseDTO(false, 404, nil, err.Error())
+			}
+			syllabusData = syllabusList[0].(map[string]interface{})
+		} else if syllabusVersion, hasVersion := syllabusRequest["version"]; hasVersion {
 			_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus?query=syllabus_code:%v,version:%v&limit=1&offset=0", syllabusCode, syllabusVersion), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
@@ -92,8 +121,7 @@ func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIR
 					spaceData, syllabusData,
 					facultyData, projectData, idiomas)
 
-				utils.GetSyllabusTemplate(ctx, syllabusTemplateData, &syllabusTemplateResponse,
-					fmt.Sprintf("%v", templateFormat))
+				utils.GetSyllabusTemplate(ctx, syllabusTemplateData, &syllabusTemplateResponse)
 				document := syllabusTemplateResponse["body"].(map[string]interface{})["Data"]
 				return requestresponse.APIResponseDTO(true,
 					201, map[string]interface{}{"document": document},
