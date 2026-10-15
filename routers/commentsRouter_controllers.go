@@ -72,6 +72,15 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:FlujoController"] = append(beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:FlujoController"],
 		beego.ControllerComments{
+			Method:           "Reasignar",
+			Router:           "/:code/reasignar",
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:FlujoController"] = append(beego.GlobalControllerRouter["github.com/udistrital/syllabus_mid/controllers:FlujoController"],
+		beego.ControllerComments{
 			Method:           "Rechazar",
 			Router:           "/:code/rechazar",
 			AllowHTTPMethods: []string{"post"},
