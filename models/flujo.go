@@ -39,8 +39,8 @@ type Flujo struct {
 	FechaAsignacion      string            `json:"fecha_asignacion,omitempty"`
 	FechaLimite          string            `json:"fecha_limite,omitempty"`
 	FechaEnvio           string            `json:"fecha_envio,omitempty"`
-	FechaResolucion      string            `json:"fecha_resolucion,omitempty"`
-	ResueltoPor          int               `json:"resuelto_por,omitempty"`
+	FechaUltimaDecision  string            `json:"fecha_ultima_decision,omitempty"`
+	UltimaDecisionPor    int               `json:"ultima_decision_por,omitempty"`
 	MotivoRechazo        string            `json:"motivo_rechazo,omitempty"`
 	Historial            []HistorialEstado `json:"historial,omitempty"`
 }
