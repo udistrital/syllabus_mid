@@ -23,6 +23,15 @@ func esEstadoBorrador(estado string) bool {
 	return false
 }
 
+// marcaAguaTexto define la marca de agua para las propuestas no publicadas
+// (todo lo que no es la versión final/publicada).
+func marcaAguaTexto(estado string) string {
+	if estado == models.EstadoEnRevision {
+		return "EN REVISIÓN"
+	}
+	return "BORRADOR"
+}
+
 func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIResponse {
 	var syllabusRequest map[string]interface{}
 	var syllabusResponse map[string]interface{}
@@ -120,6 +129,11 @@ func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIR
 				syllabusTemplateData = utils.GetSyllabusTemplateData(
 					spaceData, syllabusData,
 					facultyData, projectData, idiomas)
+
+				// Las propuestas no publicadas llevan marca de agua en el PDF.
+				if esEstadoBorrador(estadoStr) {
+					syllabusTemplateData["marca_agua"] = marcaAguaTexto(estadoStr)
+				}
 
 				utils.GetSyllabusTemplate(ctx, syllabusTemplateData, &syllabusTemplateResponse)
 				document := syllabusTemplateResponse["body"].(map[string]interface{})["Data"]

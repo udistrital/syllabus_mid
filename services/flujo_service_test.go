@@ -74,3 +74,14 @@ func TestBuildSeguimientoEnRevision(t *testing.T) {
 		t.Fatalf("no debe mutar el mapa original")
 	}
 }
+
+func TestMarcaAguaTexto(t *testing.T) {
+	if got := marcaAguaTexto(models.EstadoEnRevision); got != "EN REVISIÓN" {
+		t.Fatalf("en_revision inesperado: %q", got)
+	}
+	for _, estado := range []string{models.EstadoAsignado, models.EstadoRechazado, models.EstadoExpirado} {
+		if got := marcaAguaTexto(estado); got != "BORRADOR" {
+			t.Fatalf("%s inesperado: %q", estado, got)
+		}
+	}
+}
