@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -20,10 +21,10 @@ func (e *QueryError) Error() string {
 	return e.Message
 }
 
-func GetFacultadDelProyectoC(projectIdOikos string) (map[string]any, error) {
+func GetFacultadDelProyectoC(ctx context.Context, projectIdOikos string) (map[string]any, error) {
 	var facultadResponse map[string]interface{}
 
-	facultadErr := request.GetJson(
+	_, facultadErr := request.GetWithContext(ctx,
 		beego.AppConfig.String("OikosService")+
 			fmt.Sprintf("dependencia/get_dependencias_padres_by_id/%v", projectIdOikos),
 		&facultadResponse)
@@ -49,10 +50,10 @@ func GetFacultadDelProyectoC(projectIdOikos string) (map[string]any, error) {
 
 // GetPadreDependenciaOikos retorna el id de la dependencia padre (campo Padre)
 // del registro cuyo Id coincide con idOikos. Un Padre 0 indica la máxima jerarquía.
-func GetPadreDependenciaOikos(idOikos string) (int, error) {
+func GetPadreDependenciaOikos(ctx context.Context, idOikos string) (int, error) {
 	var resp models.DependenciasPadresResponse
 
-	err := request.GetJson(
+	_, err := request.GetWithContext(ctx,
 		beego.AppConfig.String("OikosService")+
 			fmt.Sprintf("dependencia/get_dependencias_padres_by_id/%s", idOikos), &resp)
 	if err != nil {
@@ -86,10 +87,10 @@ func GetPadreDependenciaOikos(idOikos string) (int, error) {
 	}
 }
 
-func GetProyectoCurricular(proyectoId int) (map[string]any, error) {
+func GetProyectoCurricular(ctx context.Context, proyectoId int) (map[string]any, error) {
 	var proyectoResponse map[string]interface{}
 
-	proyectoErr := request.GetJsonWSO2(
+	_, proyectoErr := request.GetWithContext(ctx,
 		beego.AppConfig.String("HomologacionDependenciaService")+
 			fmt.Sprintf("proyecto_curricular_cod_proyecto/%v", proyectoId),
 		&proyectoResponse)
@@ -108,10 +109,10 @@ func GetProyectoCurricular(proyectoId int) (map[string]any, error) {
 }
 
 // GetIdOikosBySnies consulta homologación por código SNIES y retorna el id_oikos.
-func GetIdOikosBySnies(snies string) (string, error) {
+func GetIdOikosBySnies(ctx context.Context, snies string) (string, error) {
 	var resp models.HomologacionResponse
 
-	err := request.GetJsonWSO2(
+	_, err := request.GetWithContext(ctx,
 		beego.AppConfig.String("HomologacionDependenciaService")+
 			fmt.Sprintf("proyecto_curricular_snies/%s", snies), &resp)
 	if err != nil {

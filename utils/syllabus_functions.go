@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
@@ -332,6 +334,20 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	var objetivosEspecificos []string
 	var versionSyllabus string
 
+	// Normaliza un timestamp a solo fecha en hora de Bogotá (el PDF no muestra
+	// horas). Acepta formatos con offset (-05:00) y UTC (Z); si no es parseable,
+	// recorta por "T" como respaldo.
+	soloFechaBogota := func(bruto string) string {
+		valor := strings.TrimSpace(bruto)
+		if valor == "" {
+			return ""
+		}
+		if t, err := time.Parse(time.RFC3339, valor); err == nil {
+			return t.In(time.FixedZone("COT", -5*3600)).Format("2006-01-02")
+		}
+		return strings.Split(valor, "T")[0]
+	}
+
 	// Detectar si es formato legacy y transformar si es necesario
 	if isLegacyFormat(syllabusData) {
 		logs.Info("Syllabus detectado como formato legacy - iniciando transformación")
@@ -422,9 +438,9 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	reviso := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "reviso", ""))
 	aprobo := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "aprobo", ""))
 	// Formato nuevo (snake_case). Fallback a camelCase para documentos previos.
-	fechaElaboro := fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fecha_elaboro", ""))
+	fechaElaboro := soloFechaBogota(fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fecha_elaboro", "")))
 	if fechaElaboro == "" {
-		fechaElaboro = fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fechaElaboro", ""))
+		fechaElaboro = soloFechaBogota(fmt.Sprintf("%v", helpers.DefaultToMapString(seguimiento, "fechaElaboro", "")))
 	}
 
 	caracter, modalidad, areaFormacion := GetCaracterModalidadAreaFormacion(spaceData, syllabusData)
@@ -484,12 +500,10 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 		seguimiento["fechaAprobacionConsejo"] = "0000-00-00T00:00:00.000Z"
 	}
 
-	fechaRevConsejo := strings.Split(
-		asString(helpers.DefaultToMapString(seguimiento, "fechaRevisionConsejo", "")),
-		"T")[0]
-	fechaAprobConsejo := strings.Split(
-		asString(helpers.DefaultToMapString(seguimiento, "fechaAprobacionConsejo", "")),
-		"T")[0]
+	fechaRevConsejo := soloFechaBogota(
+		asString(helpers.DefaultToMapString(seguimiento, "fechaRevisionConsejo", "")))
+	fechaAprobConsejo := soloFechaBogota(
+		asString(helpers.DefaultToMapString(seguimiento, "fechaAprobacionConsejo", "")))
 	numActa := asString(helpers.DefaultToMapString(seguimiento, "numeroActa", ""))
 
 	versionSyllabus = ""
@@ -541,18 +555,9 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 	return syllabusTemplateData
 }
 
-func GetSyllabusTemplate(syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}, format string) {
-	var url string
-	if strings.ToLower(format) == "pdf" {
-		url = beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
-	} else {
-		url = beego.AppConfig.String("SyllabusService") + "syllabus/template/spreadsheet"
-	}
-	if err := helpers.SendJson(
-		url,
-		"POST",
-		&syllabusTemplateResponse,
-		syllabusTemplateData); err != nil {
+func GetSyllabusTemplate(ctx context.Context, syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}) {
+	url := beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
+	if _, err := request.PostWithContext(ctx, url, syllabusTemplateData, syllabusTemplateResponse); err != nil {
 		panic(map[string]interface{}{
 			"funcion": "GenerarTemplate",
 			"err":     "Error al generar el documento del syllabus ",
@@ -561,10 +566,10 @@ func GetSyllabusTemplate(syllabusTemplateData map[string]interface{}, syllabusTe
 	}
 }
 
-func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]any, error) {
+func GetAcademicSpaceData(ctx context.Context, pensumId, carreraCod, asignaturaCod int) (map[string]any, error) {
 	var spaceResponse map[string]interface{}
 
-	spaceErr := request.GetJsonWSO2(
+	_, spaceErr := request.GetWithContext(ctx,
 		beego.AppConfig.String("AcademicaEspacioAcademicoService")+
 			fmt.Sprintf("detalle_espacio_academico/%v/%v/%v", pensumId, carreraCod, asignaturaCod),
 		&spaceResponse)
@@ -589,11 +594,11 @@ func GetAcademicSpaceData(pensumId, carreraCod, asignaturaCod int) (map[string]a
 	return nil, fmt.Errorf("Espacio académico no encontrado")
 }
 
-func GetIdiomas(idiomaIds []interface{}) (string, error) {
+func GetIdiomas(ctx context.Context, idiomaIds []interface{}) (string, error) {
 	var idiomaResponse []map[string]interface{}
 	idiomasStr := ""
 
-	idiomaErr := request.GetJson(
+	_, idiomaErr := request.GetWithContext(ctx,
 		beego.AppConfig.String("IdiomaService")+"idioma",
 		&idiomaResponse)
 

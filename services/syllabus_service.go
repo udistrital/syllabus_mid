@@ -1,17 +1,38 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	"github.com/udistrital/syllabus_mid/models"
 	"github.com/udistrital/syllabus_mid/utils"
 	"github.com/udistrital/utils_oas/request"
 	"github.com/udistrital/utils_oas/requestresponse"
 )
 
-func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
+// esEstadoBorrador indica si el estado corresponde a una propuesta no publicada.
+func esEstadoBorrador(estado string) bool {
+	for _, e := range models.EstadosBorrador {
+		if e == estado {
+			return true
+		}
+	}
+	return false
+}
+
+// marcaAguaTexto define la marca de agua para las propuestas no publicadas
+// (todo lo que no es la versión final/publicada).
+func marcaAguaTexto(estado string) string {
+	if estado == models.EstadoEnRevision {
+		return "EN REVISIÓN"
+	}
+	return "BORRADOR"
+}
+
+func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIResponse {
 	var syllabusRequest map[string]interface{}
 	var syllabusResponse map[string]interface{}
 	var syllabusTemplateResponse map[string]interface{}
@@ -20,15 +41,33 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 
 	if err := json.Unmarshal(data, &syllabusRequest); err == nil {
 		syllabusCode := syllabusRequest["syllabusCode"]
-		templateFormat, hasFormat := syllabusRequest["format"]
-		if hasFormat {
-			templateFormat = templateFormat.(string)
-		} else {
-			templateFormat = "pdf"
+
+		estadoStr := ""
+		if estado, hasEstado := syllabusRequest["estado"]; hasEstado && estado != nil {
+			estadoStr = fmt.Sprintf("%v", estado)
 		}
 
-		if syllabusVersion, hasVersion := syllabusRequest["version"]; hasVersion {
-			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
+		if esEstadoBorrador(estadoStr) {
+			// Borrador/propuesta: se trae la versión no publicada por su estado
+			// (el estado explícito evita el filtro por defecto que oculta borradores).
+			_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
+				fmt.Sprintf("syllabus?query=syllabus_code:%v,estado:%v&limit=1&offset=0", syllabusCode, estadoStr), &syllabusResponse)
+			if syllabusErr != nil || syllabusResponse["Success"] == false {
+				if syllabusErr == nil {
+					syllabusErr = fmt.Errorf("SyllabusService: %v", syllabusResponse["Message"])
+				}
+				logs.Error(syllabusErr.Error())
+				return requestresponse.APIResponseDTO(false, 404, nil, syllabusErr.Error())
+			}
+			syllabusList, ok := syllabusResponse["Data"].([]interface{})
+			if !ok || len(syllabusList) < 1 {
+				err := fmt.Errorf("SyllabusService: propuesta no encontrada para el syllabusCode %v y estado %v", syllabusCode, estadoStr)
+				logs.Error(err.Error())
+				return requestresponse.APIResponseDTO(false, 404, nil, err.Error())
+			}
+			syllabusData = syllabusList[0].(map[string]interface{})
+		} else if syllabusVersion, hasVersion := syllabusRequest["version"]; hasVersion {
+			_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus?query=syllabus_code:%v,version:%v&limit=1&offset=0", syllabusCode, syllabusVersion), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {
@@ -46,7 +85,7 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 				syllabusData = syllabusList[0].(map[string]interface{})
 			}
 		} else {
-			syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
+			_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
 				fmt.Sprintf("syllabus/%v", syllabusCode), &syllabusResponse)
 			if syllabusErr != nil || syllabusResponse["Success"] == false {
 				if syllabusErr == nil {
@@ -68,19 +107,19 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 		syllabusData["proyecto_curricular_id"] = syllabusRequest["proyectoId"]
 		syllabusData["plan_estudios_id"] = syllabusRequest["planId"]
 
-		spaceData, spaceErr := utils.GetAcademicSpaceData(
+		spaceData, spaceErr := utils.GetAcademicSpaceData(ctx,
 			int(syllabusData["plan_estudios_id"].(float64)),
 			int(syllabusData["proyecto_curricular_id"].(float64)),
 			int(syllabusData["espacio_academico_id"].(float64)))
 
-		projectData, projectErr := utils.GetProyectoCurricular(int(syllabusData["proyecto_curricular_id"].(float64)))
+		projectData, projectErr := utils.GetProyectoCurricular(ctx, int(syllabusData["proyecto_curricular_id"].(float64)))
 
 		if spaceErr == nil && projectErr == nil {
-			facultyData, facultyErr := utils.GetFacultadDelProyectoC(projectData["id_oikos"].(string))
+			facultyData, facultyErr := utils.GetFacultadDelProyectoC(ctx, projectData["id_oikos"].(string))
 			idiomas := ""
 
 			if syllabusData["idioma_espacio_id"] != nil {
-				idiomasStr, idiomaErr := utils.GetIdiomas(syllabusData["idioma_espacio_id"].([]interface{}))
+				idiomasStr, idiomaErr := utils.GetIdiomas(ctx, syllabusData["idioma_espacio_id"].([]interface{}))
 				if idiomaErr == nil {
 					idiomas = idiomasStr
 				}
@@ -91,8 +130,12 @@ func PostSyllabusTemplate(data []byte) requestresponse.APIResponse {
 					spaceData, syllabusData,
 					facultyData, projectData, idiomas)
 
-				utils.GetSyllabusTemplate(syllabusTemplateData, &syllabusTemplateResponse,
-					fmt.Sprintf("%v", templateFormat))
+				// Las propuestas no publicadas llevan marca de agua en el PDF.
+				if esEstadoBorrador(estadoStr) {
+					syllabusTemplateData["marca_agua"] = marcaAguaTexto(estadoStr)
+				}
+
+				utils.GetSyllabusTemplate(ctx, syllabusTemplateData, &syllabusTemplateResponse)
 				document := syllabusTemplateResponse["body"].(map[string]interface{})["Data"]
 				return requestresponse.APIResponseDTO(true,
 					201, map[string]interface{}{"document": document},
