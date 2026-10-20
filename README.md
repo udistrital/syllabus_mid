@@ -19,6 +19,7 @@ IDIOMA_SERVICE: [Servicio API IDIOMA]
 OIKOS_SERVICE: [Servicio API OIKOS]
 SYLLABUS_SERVICE: [Servicio API CRUD SYLLABUS]
 ACADEMICA_CORE_SERVICE: [Servicio API CRD ACADEMICA]
+TERCEROS_SERVICE: [Servicio API CRUD TERCEROS]
 ```
 **NOTA:** Las variables se pueden ver en el fichero conf/app.conf.
 
@@ -75,8 +76,24 @@ docker ps
 
 Pruebas unitarias
 ```shell
-# En Proceso
+go test ./utils/... ./services/...
 ```
+
+### Flujo de aprobación
+
+Endpoints del flujo (namespace `/v1/flujo`). La identidad se resuelve desde el
+token (`oauth2/userinfo` → documento) y, en local sin token, desde el campo
+`documento` del cuerpo. La autorización es por datos: coordinador por
+vinculación del programa y docente por la asignación del borrador.
+
+### Manejo de fechas
+
+* Formato canónico de escritura: ISO 8601 en UTC (`time.Now().UTC()`,
+  `toISOString()` del front).
+* El PDF recibe las fechas de `seguimiento` solo con la fecha (sin horas),
+  convertidas a Bogotá en `GetSyllabusTemplateData` (`fecha_elaboro`,
+  `fecha_rev_consejo`, `fecha_aprob_consejo`).
+* La conversión para mostrar en pantalla es del cliente (zona del navegador).
 
 ## Estado CI
 
