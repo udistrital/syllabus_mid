@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
@@ -30,6 +31,35 @@ func marcaAguaTexto(estado string) string {
 		return "EN REVISIÓN"
 	}
 	return "BORRADOR"
+}
+
+// resolverImagenContenidoTematico consulta NUXEO y deja el contenido de la
+// imagen en el template. Si falla, marca el error para que el PDF lo muestre.
+func resolverImagenContenidoTematico(ctx context.Context, syllabusData, syllabusTemplateData map[string]interface{}) {
+	contenidoRaw, ok := syllabusData["contenido"]
+	if !ok || contenidoRaw == nil {
+		return
+	}
+
+	contenido, isMap := contenidoRaw.(map[string]interface{})
+	if !isMap {
+		return
+	}
+
+	imagenID, hasImage := contenido["imagen_id"].(string)
+	imagenID = strings.TrimSpace(imagenID)
+	if !hasImage || imagenID == "" {
+		return
+	}
+
+	dataURI, err := utils.GetNuxeoImageDataURI(ctx, imagenID)
+	if err != nil {
+		logs.Error("NUXEO: no se pudo resolver la imagen del contenido tematico: %v", err)
+		syllabusTemplateData["contenido_tematico_imagen_error"] = true
+		return
+	}
+
+	syllabusTemplateData["contenido_tematico_imagen"] = dataURI
 }
 
 func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIResponse {
@@ -134,6 +164,8 @@ func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIR
 				if esEstadoBorrador(estadoStr) {
 					syllabusTemplateData["marca_agua"] = marcaAguaTexto(estadoStr)
 				}
+
+				resolverImagenContenidoTematico(ctx, syllabusData, syllabusTemplateData)
 
 				utils.GetSyllabusTemplate(ctx, syllabusTemplateData, &syllabusTemplateResponse)
 				document := syllabusTemplateResponse["body"].(map[string]interface{})["Data"]
