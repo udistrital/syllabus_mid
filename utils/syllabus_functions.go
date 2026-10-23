@@ -556,7 +556,7 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 }
 
 func GetSyllabusTemplate(ctx context.Context, syllabusTemplateData map[string]interface{}, syllabusTemplateResponse *map[string]interface{}) {
-	url := beego.AppConfig.String("SyllabusService") + "v2/syllabus/template"
+	url := beego.AppConfig.String("SyllabusService") + "v3/syllabus/template"
 	if _, err := request.PostWithContext(ctx, url, syllabusTemplateData, syllabusTemplateResponse); err != nil {
 		panic(map[string]interface{}{
 			"funcion": "GenerarTemplate",
