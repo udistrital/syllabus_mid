@@ -25,7 +25,7 @@ func (c *SyllabusLegacyController) URLMapping() {
 func (c *SyllabusLegacyController) GetSyllabusLegacy() {
 	defer errorhandler.HandlePanic(&c.Controller)
 	encodedParamsPlan := c.Ctx.Input.Param(":qp_syllabus")
-	resultado := services.GetSyllabusLegacy(encodedParamsPlan)
+	resultado := services.GetSyllabusLegacy(c.Ctx.Request.Context(), encodedParamsPlan)
 	c.Data["json"] = resultado
 	c.Ctx.Output.SetStatus(resultado.Status)
 	c.ServeJSON()
