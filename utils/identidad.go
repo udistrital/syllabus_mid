@@ -52,7 +52,7 @@ func GetTerceroByDocumento(ctx context.Context, documento string) (*models.Terce
 			Message: fmt.Sprintf("Error consultando terceros para el documento %s: %v", documento, err),
 		}
 	}
-	if len(datos) == 0 {
+	if len(datos) == 0 || datos[0].TerceroId.Id == 0 {
 		return nil, nil
 	}
 	tercero := datos[0].TerceroId
