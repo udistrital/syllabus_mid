@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/astaxie/beego/logs"
@@ -626,6 +627,7 @@ func MisAsignacionesSyllabus(ctx context.Context, documento string) requestrespo
 
 // BuscarDocente resuelve un tercero a partir del número de identificación.
 func BuscarDocente(ctx context.Context, documento string) requestresponse.APIResponse {
+	documento = strings.TrimSpace(documento)
 	if documento == "" {
 		return respErr(http.StatusBadRequest, "El documento es obligatorio")
 	}
@@ -637,7 +639,21 @@ func BuscarDocente(ctx context.Context, documento string) requestresponse.APIRes
 		return respErr(http.StatusNotFound,
 			fmt.Sprintf("No se encontró un tercero activo con documento %s", documento))
 	}
-	return requestresponse.APIResponseDTO(true, http.StatusOK, tercero, "Docente encontrado")
+	docente, err := utils.GetDocenteActivoByDocumento(ctx, documento)
+	if err != nil {
+		return apiError(err)
+	}
+	if docente == nil {
+		return respErr(http.StatusNotFound,
+			fmt.Sprintf("El tercero con documento %s existe, pero no está registrado como docente activo", documento))
+	}
+	return requestresponse.APIResponseDTO(true, http.StatusOK, models.DocenteBusqueda{
+		Id:             tercero.Id,
+		NombreCompleto: tercero.NombreCompleto,
+		UsuarioWSO2:    tercero.UsuarioWSO2,
+		Cedula:         docente.Cedula,
+		Nombre:         docente.Nombre,
+	}, "Docente encontrado")
 }
 
 // autorizadoSobreDraft indica si la identidad es el docente asignado o un
