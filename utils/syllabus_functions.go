@@ -456,6 +456,14 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 					continue
 				}
 
+				// Formato matriz de relación: HTML de la tabla de propósitos
+				if pfaMatriz, hasMatriz := resMap["pfa_matriz"]; hasMatriz {
+					propositos = append(propositos, map[string]interface{}{
+						"pfa_matriz": pfaMatriz,
+					})
+					continue
+				}
+
 				// Nuevo formato: PFA de programa (se conservan campos legacy si existen)
 				if pfaPrograma, hasPFA := resMap["pfa_programa"]; hasPFA {
 					propositos = append(propositos, map[string]interface{}{
