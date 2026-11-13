@@ -26,7 +26,7 @@ func (c *VinculacionController) URLMapping() {
 func (c *VinculacionController) PostVinculacion() {
 	defer errorhandler.HandlePanic(&c.Controller)
 	bodyData := c.Ctx.Input.RequestBody
-	respuesta := services.PostVinculacion(bodyData)
+	respuesta := services.PostVinculacion(c.Ctx.Request.Context(), bodyData)
 	c.Data["json"] = respuesta
 	c.Ctx.Output.SetStatus(respuesta.Status)
 	c.ServeJSON()

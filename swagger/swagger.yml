@@ -6,6 +6,73 @@ info:
   version: 1.0.0
 basePath: /v1
 paths:
+  /flujo/{code}/aprobar:
+    post:
+      tags:
+      - flujo
+  /flujo/{code}/borrador:
+    get:
+      tags:
+      - flujo
+    put:
+      tags:
+      - flujo
+  /flujo/{code}/cancelar:
+    post:
+      tags:
+      - flujo
+  /flujo/{code}/estado:
+    get:
+      tags:
+      - flujo
+  /flujo/{code}/proponer:
+    post:
+      tags:
+      - flujo
+  /flujo/{code}/reabrir:
+    post:
+      tags:
+      - flujo
+  /flujo/{code}/reasignar:
+    post:
+      tags:
+      - flujo
+  /flujo/{code}/rechazar:
+    post:
+      tags:
+      - flujo
+  /flujo/asignar:
+    post:
+      tags:
+      - flujo
+      description: |-
+        Asigna la creación/edición de un syllabus a un docente
+        <br>
+      operationId: FlujoController.Asignar
+      parameters:
+      - in: body
+        name: body
+        description: datos de asignación
+        required: true
+        schema:
+          $ref: '#/definitions/{}'
+      responses:
+        "201":
+          description: '{}'
+        "400":
+          description: ""
+  /flujo/docente:
+    get:
+      tags:
+      - flujo
+  /flujo/mis-asignaciones:
+    get:
+      tags:
+      - flujo
+  /flujo/pendientes:
+    get:
+      tags:
+      - flujo
   /syllabus/{qp_syllabus}:
     get:
       tags:
@@ -77,3 +144,6 @@ tags:
 - name: vinculacion
   description: |
     VinculacionController operations for Vinculacion
+- name: flujo
+  description: |
+    FlujoController expone el flujo de aprobación de syllabus.

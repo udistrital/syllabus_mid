@@ -2,6 +2,21 @@ package models
 
 import "time"
 
+// DocenteActivoCore representa un docente con carga académica activa en academica_core.
+type DocenteActivoCore struct {
+	Cedula string `json:"cedula"`
+	Nombre string `json:"nombre"`
+}
+
+// DocenteBusqueda es la respuesta pública de /flujo/docente.
+type DocenteBusqueda struct {
+	Id             int    `json:"Id"`
+	NombreCompleto string `json:"NombreCompleto"`
+	UsuarioWSO2    string `json:"UsuarioWSO2"`
+	Cedula         string `json:"cedula"`
+	Nombre         string `json:"nombre"`
+}
+
 // ProgramaAcademicoCore representa un registro del reporte de academica_core.
 // Los tipos corresponden a los valores reales que expone el servicio para
 // MNTAC.ACCRA; los campos nullable se modelan con punteros.

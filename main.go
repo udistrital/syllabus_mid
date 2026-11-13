@@ -40,9 +40,7 @@ func main() {
 		logs.Error("error configurando AWS XRay: %v", err)
 	}
 	apistatus.Init()
-	auditoria.InitMiddleware()
-	// Se agrega para enviar bearer a los servicios conusmidos, deja el token global por peticion.
-	auditoria.InitInterceptor()
+	auditoria.InitWithAuthEnforcer()
 	beego.ErrorController(&customerrorv2.CustomErrorController{})
 	security.SetSecurityHeaders()
 	beego.Run()
