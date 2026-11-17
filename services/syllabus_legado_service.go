@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 	"github.com/udistrital/utils_oas/requestresponse"
 )
 
-func GetSyllabusLegacy(encodedParamsPlan string) requestresponse.APIResponse {
+func GetSyllabusLegacy(ctx context.Context, encodedParamsPlan string) requestresponse.APIResponse {
 	var syllabusTemplateData map[string]interface{}
 	var syllabusData map[string]interface{}
 	var syllabusResponse map[string]interface{}
@@ -71,7 +72,7 @@ func GetSyllabusLegacy(encodedParamsPlan string) requestresponse.APIResponse {
 	}
 
 	// Query
-	syllabusErr := request.GetJson(beego.AppConfig.String("SyllabusService")+
+	_, syllabusErr := request.GetWithContext(ctx, beego.AppConfig.String("SyllabusService")+
 		fmt.Sprintf("syllabus?query=espacio_academico_id:%v,proyecto_curricular_id:%v,plan_estudios_id:%v,syllabus_actual:true&limit=1",
 			espacioAcademicoId, proyectoCurricularId, planEstudioId),
 		&syllabusResponse)
@@ -96,7 +97,7 @@ func GetSyllabusLegacy(encodedParamsPlan string) requestresponse.APIResponse {
 	}
 	syllabusData = syllabusItem
 
-	spaceData, spaceErr := utils.GetAcademicSpaceData(
+	spaceData, spaceErr := utils.GetAcademicSpaceData(ctx,
 		int(planEstudioId),
 		int(proyectoCurricularId),
 		int(espacioAcademicoId))
@@ -106,7 +107,7 @@ func GetSyllabusLegacy(encodedParamsPlan string) requestresponse.APIResponse {
 		return requestresponse.APIResponseDTO(false, http.StatusBadGateway, nil, spaceErr.Error())
 	}
 
-	projectData, projectErr := utils.GetProyectoCurricular(int(proyectoCurricularId))
+	projectData, projectErr := utils.GetProyectoCurricular(ctx, int(proyectoCurricularId))
 
 	if projectErr != nil {
 		logs.Error(projectErr.Error())
@@ -117,11 +118,11 @@ func GetSyllabusLegacy(encodedParamsPlan string) requestresponse.APIResponse {
 	if !idOikosOK {
 		idOikos = fmt.Sprintf("%v", projectData["id_oikos"])
 	}
-	facultyData, facultyErr := utils.GetFacultadDelProyectoC(idOikos)
+	facultyData, facultyErr := utils.GetFacultadDelProyectoC(ctx, idOikos)
 
 	idiomas := ""
 	if idiomaIDs, idiomaOK := syllabusData["idioma_espacio_id"].([]interface{}); idiomaOK {
-		idiomasStr, idiomaErr := utils.GetIdiomas(idiomaIDs)
+		idiomasStr, idiomaErr := utils.GetIdiomas(ctx, idiomaIDs)
 		if idiomaErr == nil {
 			idiomas = idiomasStr
 		}
