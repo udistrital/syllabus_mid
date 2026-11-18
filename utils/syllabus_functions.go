@@ -559,6 +559,8 @@ func GetSyllabusTemplateData(spaceData, syllabusData, facultyData, projectData m
 		"aprobo":                         aprobo,
 		"fecha_elaboro":                  fechaElaboro,
 		"version_syllabus":               versionSyllabus,
+		// La propuesta se genera sin la franja de cabecera institucional.
+		"sin_cabecera": EsPropuesta(syllabusData),
 	}
 	return syllabusTemplateData
 }
@@ -571,6 +573,29 @@ func GetSyllabusTemplate(ctx context.Context, syllabusTemplateData map[string]in
 			"err":     "Error al generar el documento del syllabus ",
 			"status":  "400",
 			"log":     err})
+	}
+}
+
+// EsPropuesta indica si el documento es una propuesta de syllabus para un
+// espacio académico que todavía no existe en Académica.
+func EsPropuesta(syllabusData map[string]interface{}) bool {
+	esPropuesta, ok := syllabusData["es_propuesta"].(bool)
+	return ok && esPropuesta
+}
+
+// BuildSpaceDataDesdePropuesta arma los datos de identificación del espacio
+// académico con la información manual capturada en la propuesta. Los campos que
+// dependen del espacio real (código, distribución de horas y naturaleza) quedan
+// vacíos porque el espacio todavía no existe.
+func BuildSpaceDataDesdePropuesta(syllabusData map[string]interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"nombre_espacio_academico": asString(syllabusData["propuesta_nombre"]),
+		"num_creditos":             asString(syllabusData["propuesta_creditos"]),
+		"cod_espacio_academico":    "",
+		"htd":                      "",
+		"htc":                      "",
+		"hta":                      "",
+		"naturaleza":               "",
 	}
 }
 

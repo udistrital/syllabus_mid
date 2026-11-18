@@ -94,3 +94,58 @@ func TestPropositosSinResultados(t *testing.T) {
 		t.Fatalf("se esperaba la lista de propósitos vacía, se obtuvieron %v", plantilla["propositos"])
 	}
 }
+
+func TestEsPropuesta(t *testing.T) {
+	if !utils.EsPropuesta(map[string]interface{}{"es_propuesta": true}) {
+		t.Fatalf("se esperaba que el documento con es_propuesta=true fuera propuesta")
+	}
+
+	for _, datos := range []map[string]interface{}{
+		{},
+		{"es_propuesta": false},
+		{"es_propuesta": "true"},
+	} {
+		if utils.EsPropuesta(datos) {
+			t.Fatalf("se esperaba que el documento %v no fuera propuesta", datos)
+		}
+	}
+}
+
+func TestBuildSpaceDataDesdePropuesta(t *testing.T) {
+	spaceData := utils.BuildSpaceDataDesdePropuesta(map[string]interface{}{
+		"es_propuesta":       true,
+		"propuesta_nombre":   "Cálculo Diferencial",
+		"propuesta_creditos": 4,
+	})
+
+	if spaceData["nombre_espacio_academico"] != "Cálculo Diferencial" {
+		t.Fatalf("no se conservó el nombre de la asignatura: %v", spaceData["nombre_espacio_academico"])
+	}
+
+	if spaceData["num_creditos"] != "4" {
+		t.Fatalf("no se conservaron los créditos de la propuesta: %v", spaceData["num_creditos"])
+	}
+
+	for _, campo := range []string{"cod_espacio_academico", "htd", "htc", "hta", "naturaleza"} {
+		if spaceData[campo] != "" {
+			t.Fatalf("el campo %v depende del espacio real y debe quedar vacío: %v", campo, spaceData[campo])
+		}
+	}
+}
+
+func TestPlantillaMarcaSinCabeceraParaPropuesta(t *testing.T) {
+	propuesta := plantillaDe(t, map[string]interface{}{
+		"es_propuesta":         true,
+		"propuesta_nombre":     "Cálculo Diferencial",
+		"espacio_academico_id": 0,
+	})
+
+	if propuesta["sin_cabecera"] != true {
+		t.Fatalf("la plantilla de la propuesta debe pedir omitir la cabecera: %v", propuesta["sin_cabecera"])
+	}
+
+	normal := plantillaDe(t, map[string]interface{}{})
+	if normal["sin_cabecera"] != false {
+		t.Fatalf("la plantilla de un syllabus normal debe conservar la cabecera: %v", normal["sin_cabecera"])
+	}
+}
