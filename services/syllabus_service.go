@@ -174,6 +174,11 @@ func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIR
 					syllabusTemplateData["marca_agua"] = marcaAguaTexto(estadoStr)
 				}
 
+				// La propuesta de syllabus es un documento previo a la publicación.
+				if utils.EsPropuesta(syllabusData) {
+					syllabusTemplateData["marca_agua"] = "PROPUESTA"
+				}
+
 				resolverImagenContenidoTematico(ctx, syllabusData, syllabusTemplateData)
 
 				utils.GetSyllabusTemplate(ctx, syllabusTemplateData, &syllabusTemplateResponse)
