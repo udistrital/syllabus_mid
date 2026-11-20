@@ -137,10 +137,19 @@ func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIR
 		syllabusData["proyecto_curricular_id"] = syllabusRequest["proyectoId"]
 		syllabusData["plan_estudios_id"] = syllabusRequest["planId"]
 
-		spaceData, spaceErr := utils.GetAcademicSpaceData(ctx,
-			int(syllabusData["plan_estudios_id"].(float64)),
-			int(syllabusData["proyecto_curricular_id"].(float64)),
-			int(syllabusData["espacio_academico_id"].(float64)))
+		// La propuesta de syllabus corresponde a un espacio académico que aún no
+		// existe: se usan los datos manuales de identificación y no se consulta
+		// el espacio en Académica.
+		var spaceData map[string]interface{}
+		var spaceErr error
+		if utils.EsPropuesta(syllabusData) {
+			spaceData = utils.BuildSpaceDataDesdePropuesta(syllabusData)
+		} else {
+			spaceData, spaceErr = utils.GetAcademicSpaceData(ctx,
+				int(syllabusData["plan_estudios_id"].(float64)),
+				int(syllabusData["proyecto_curricular_id"].(float64)),
+				int(syllabusData["espacio_academico_id"].(float64)))
+		}
 
 		projectData, projectErr := utils.GetProyectoCurricular(ctx, int(syllabusData["proyecto_curricular_id"].(float64)))
 
@@ -163,6 +172,11 @@ func PostSyllabusTemplate(ctx context.Context, data []byte) requestresponse.APIR
 				// Las propuestas no publicadas llevan marca de agua en el PDF.
 				if esEstadoBorrador(estadoStr) {
 					syllabusTemplateData["marca_agua"] = marcaAguaTexto(estadoStr)
+				}
+
+				// La propuesta de syllabus es un documento previo a la publicación.
+				if utils.EsPropuesta(syllabusData) {
+					syllabusTemplateData["marca_agua"] = "PROPUESTA"
 				}
 
 				resolverImagenContenidoTematico(ctx, syllabusData, syllabusTemplateData)
